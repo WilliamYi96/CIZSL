@@ -1,3 +1,5 @@
+This public version will not update...
+
 # CIZSL
 [Creativity Inspired Zero-Shot Learning](https://arxiv.org/pdf/1904.01109.pdf)
 
