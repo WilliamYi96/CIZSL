@@ -165,7 +165,8 @@ def train(creative_weight=1000, model_num=1, is_val=True):
     exp_params = 'Model_{}_CAN{}_Eu{}_Rls{}_RWz{}_{}'.format(model_num, opt.Creative_weight, opt.CENT_LAMBDA,
                                                              opt.REG_W_LAMBDA, opt.REG_Wz_LAMBDA, opt.exp_name)
 
-    out_subdir = main_dir + 'out/{:s}/{:s}'.format(exp_info, exp_params)
+    # out_subdir = main_dir + 'out/{:s}/{:s}'.format(exp_info, exp_params)
+    out_subdir = main_dir + 'out/cizsl-reproduce-1/{:s}/{:s}'.format(exp_info, exp_params)
     if not os.path.exists(out_subdir):
         os.makedirs(out_subdir)
 
@@ -405,7 +406,7 @@ def train(creative_weight=1000, model_num=1, is_val=True):
                         'state_dict_D': netD.state_dict(),
                         'random_seed': opt.manualSeed,
                         'log': log_text,
-                    }, out_subdir + '/Best_model_AUC_{:.2f}.tar'.format(cur_auc))
+                    }, out_subdir + '/Best_model_AUC_{:.3f}.tar'.format(cur_auc))
 
             netG.train()
     return result
@@ -450,10 +451,10 @@ def eval_fakefeat_GZSL(netG, dataset, param, plot_dir, result):
     auc_score = integrate.trapz(y=acc_S_T_list, x=acc_U_T_list) * 100.0
     plt.plot(acc_S_T_list, acc_U_T_list)
     plt.title("{:s}-{:s}-{}: {:.4}%".format(opt.dataset, opt.splitmode, opt.model_number, auc_score))
-    plt.savefig(plot_dir + '/best_plot.png')
+    plt.savefig(plot_dir + '/best_plot_{:.3f}.png'.format(auc_score))
     plt.clf()
     plt.close()
-    np.savetxt(plot_dir + '/best_plot.txt', np.vstack([acc_S_T_list, acc_U_T_list]))
+    np.savetxt(plot_dir + '/best_plot_{:.3f}.txt'.format(auc_score), np.vstack([acc_S_T_list, acc_U_T_list]))
     result.auc_list += [auc_score]
     return auc_score
 
@@ -569,3 +570,5 @@ if __name__ == "__main__":
     print('=' * 15)
     print(opt.exp_name, opt.dataset, opt.splitmode)
     print("Accuracy is {:.4}%, and Generalized AUC is {:.4}%".format(result.best_acc, result.best_auc))
+    with open('results.txt', 'a+') as file:
+        file.write(opt.exp_name, opt.dataset, opt.splitmode, result.best_acc, result.best_auc)

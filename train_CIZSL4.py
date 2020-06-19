@@ -14,6 +14,7 @@ from sklearn.preprocessing import normalize
 import scipy.integrate as integrate
 from time import gmtime, strftime
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import torch.nn as nn
@@ -51,7 +52,7 @@ parser.add_argument('--creativity_weight', type=float, default=0.1, help='Weight
                                                                          'Best values are in main function - '
                                                                          'Can be obtained by running cross-validation')
 parser.add_argument('--validate', default=0, type=int, help='1 to validate and find best creativity weight, '
-                                                             'otherwise use --creativity_weight')
+                                                            'otherwise use --creativity_weight')
 
 parser.add_argument('--SM_Alpha', default='0.5', type=float, help='alpha weight of SM divergence')
 parser.add_argument('--SM_Beta', default='0.9999', type=float, help='beta weight of SM divergence')
@@ -60,7 +61,7 @@ parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--resume', type=str, help='the model to resume')
 parser.add_argument('--disp_interval', type=int, default=20)
 parser.add_argument('--save_interval', type=int, default=200)
-parser.add_argument('--evl_interval', type=int, default=10)  
+parser.add_argument('--evl_interval', type=int, default=10)
 # You might change the eval_interval to a higher value if wants to train the model faster, but not evaluate it at each step.
 
 opt = parser.parse_args()
@@ -90,6 +91,7 @@ torch.manual_seed(opt.manualSeed)
 torch.cuda.manual_seed_all(opt.manualSeed)
 
 main_dir = opt.main_dir
+
 
 class ListModule(nn.Module):
     def __init__(self, *args):
@@ -126,6 +128,7 @@ class Scale(nn.Module):
         for layer in self.layers:
             out = layer(out)
         return out
+
 
 def train(creative_weight=1000, model_num=1, is_val=True):
     param = _param()
@@ -166,7 +169,7 @@ def train(creative_weight=1000, model_num=1, is_val=True):
                                                              opt.REG_W_LAMBDA, opt.REG_Wz_LAMBDA, opt.exp_name)
 
     # out_subdir = main_dir + 'out/{:s}/{:s}'.format(exp_info, exp_params)
-    out_subdir = main_dir + 'out/cizsl-reproduce-r4/{:s}/{:s}'.format(exp_info, exp_params)
+    out_subdir = main_dir + 'out/cizsl-reproduce-4/{:s}/{:s}'.format(exp_info, exp_params)
     if not os.path.exists(out_subdir):
         os.makedirs(out_subdir)
 
@@ -381,7 +384,7 @@ def train(creative_weight=1000, model_num=1, is_val=True):
             acc_fake = (np.argmax(C_fake.data.cpu().numpy(), axis=1) == y_true.data.cpu().numpy()).sum() / float(
                 y_true.data.size()[0])
 
-            log_text =  'Iter-{}; rl: {:.4}%; fk: {:.4}%'.format(it, acc_real * 100, acc_fake * 100)
+            log_text = 'Iter-{}; rl: {:.4}%; fk: {:.4}%'.format(it, acc_real * 100, acc_fake * 100)
             with open(log_dir, 'a') as f:
                 f.write(log_text + '\n')
 
@@ -389,9 +392,9 @@ def train(creative_weight=1000, model_num=1, is_val=True):
             netG.eval()
             cur_acc = eval_fakefeat_test(it, netG, dataset, param, result)
             cur_auc = eval_fakefeat_GZSL(netG, dataset, param, out_subdir, result)
-            
+
             if cur_acc > result.best_acc:
-              result.best_acc = cur_acc
+                result.best_acc = cur_acc
 
             if cur_auc > result.best_auc:
                 result.best_auc = cur_auc
@@ -406,7 +409,7 @@ def train(creative_weight=1000, model_num=1, is_val=True):
                         'state_dict_D': netD.state_dict(),
                         'random_seed': opt.manualSeed,
                         'log': log_text,
-                    }, out_subdir + '/Best_model_AUC_{:.2f}.tar'.format(cur_auc))
+                    }, out_subdir + '/Best_model_AUC_{:.3f}.tar'.format(cur_auc))
 
             netG.train()
     return result
@@ -451,10 +454,10 @@ def eval_fakefeat_GZSL(netG, dataset, param, plot_dir, result):
     auc_score = integrate.trapz(y=acc_S_T_list, x=acc_U_T_list) * 100.0
     plt.plot(acc_S_T_list, acc_U_T_list)
     plt.title("{:s}-{:s}-{}: {:.4}%".format(opt.dataset, opt.splitmode, opt.model_number, auc_score))
-    plt.savefig(plot_dir + '/best_plot.png')
+    plt.savefig(plot_dir + '/best_plot_{:.3f}.png'.format(auc_score))
     plt.clf()
     plt.close()
-    np.savetxt(plot_dir + '/best_plot.txt', np.vstack([acc_S_T_list, acc_U_T_list]))
+    np.savetxt(plot_dir + '/best_plot_{:.3f}.txt'.format(auc_score), np.vstack([acc_S_T_list, acc_U_T_list]))
     result.auc_list += [auc_score]
     return auc_score
 
@@ -570,3 +573,5 @@ if __name__ == "__main__":
     print('=' * 15)
     print(opt.exp_name, opt.dataset, opt.splitmode)
     print("Accuracy is {:.4}%, and Generalized AUC is {:.4}%".format(result.best_acc, result.best_auc))
+    with open('results.txt', 'a+') as file:
+        file.write(opt.exp_name, opt.dataset, opt.splitmode, result.best_acc, result.best_auc)

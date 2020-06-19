@@ -570,3 +570,6 @@ if __name__ == "__main__":
     print('=' * 15)
     print(opt.exp_name, opt.dataset, opt.splitmode)
     print("Accuracy is {:.4}%, and Generalized AUC is {:.4}%".format(result.best_acc, result.best_auc))
+    # np.savetxt('./out' + '/results.txt', np.vstack([opt.exp_name, opt.dataset, opt.splitmode, result.best_acc, result.best_auc]))
+    with open('results-test.txt', 'a+') as file:
+        file.write(opt.exp_name, opt.dataset, opt.splitmode, result.best_acc, result.best_auc)
